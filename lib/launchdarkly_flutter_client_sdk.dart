@@ -1,4 +1,3 @@
-// @dart=2.7
 /// [launchdarkly_flutter_client_sdk] provides a Flutter wrapper around the LaunchDarkly mobile SDKs for
 /// [Android](https://github.com/launchdarkly/android-client-sdk) and [iOS](https://github.com/launchdarkly/ios-client-sdk).
 ///
@@ -92,7 +91,7 @@ class LDClient {
   ///
   /// The [eventName] is the key associated with the event or experiment. [data] is an optional parameter for additional
   /// data to include in the event for data export. [metricValue] can be used to record numeric metric for experimentation.
-  static Future<void> track(String eventName, {LDValue data, num metricValue}) async {
+  static Future<void> track(String eventName, {LDValue? data, num? metricValue}) async {
     var args = {'eventName': eventName, 'data': LDValue.normalize(data).codecValue(), 'metricValue': metricValue?.toDouble()};
     await _channel.invokeMethod('track', args);
   }
@@ -101,7 +100,7 @@ class LDClient {
   ///
   /// Will return the provided [defaultValue] if the flag is missing, not a bool, or if some error occurs.
   static Future<bool> boolVariation(String flagKey, bool defaultValue) async {
-    return _channel.invokeMethod('boolVariation', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    return _channel.invokeMethod('boolVariation', {'flagKey': flagKey, 'defaultValue': defaultValue }).then((value) => value as bool);
   }
 
   /// Returns the value of flag [flagKey] for the current user as a bool, along with information about the resultant value.
@@ -109,7 +108,7 @@ class LDClient {
   /// See [LDEvaluationDetail] for more information on the returned value. Note that [LDConfigBuilder.setEvaluationReasons]
   /// must have been set to `true` to request the additional evaluation information from the backend.
   static Future<LDEvaluationDetail<bool>> boolVariationDetail(String flagKey, bool defaultValue) async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('boolVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    Map<String, dynamic> result = await _channel.invokeMapMethod('boolVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue }) ?? {};
     return LDEvaluationDetail(result['value'], result['variationIndex'], LDEvaluationReason._fromCodecValue(result['reason']));
   }
 
@@ -117,7 +116,7 @@ class LDClient {
   ///
   /// Will return the provided [defaultValue] if the flag is missing, not a number, or if some error occurs.
   static Future<int> intVariation(String flagKey, int defaultValue) async {
-    return _channel.invokeMethod('intVariation', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    return _channel.invokeMethod('intVariation', {'flagKey': flagKey, 'defaultValue': defaultValue }).then((value) => value as int);
   }
 
   /// Returns the value of flag [flagKey] for the current user as an int, along with information about the resultant value.
@@ -125,7 +124,7 @@ class LDClient {
   /// See [LDEvaluationDetail] for more information on the returned value. Note that [LDConfigBuilder.setEvaluationReasons]
   /// must have been set to `true` to request the additional evaluation information from the backend.
   static Future<LDEvaluationDetail<int>> intVariationDetail(String flagKey, int defaultValue) async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('intVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    Map<String, dynamic> result = await _channel.invokeMapMethod('intVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue }) ?? {};
     return LDEvaluationDetail(result['value'], result['variationIndex'], LDEvaluationReason._fromCodecValue(result['reason']));
   }
 
@@ -133,7 +132,7 @@ class LDClient {
   ///
   /// Will return the provided [defaultValue] if the flag is missing, not a number, or if some error occurs.
   static Future<double> doubleVariation(String flagKey, double defaultValue) async {
-    return _channel.invokeMethod('doubleVariation', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    return _channel.invokeMethod('doubleVariation', {'flagKey': flagKey, 'defaultValue': defaultValue }).then((value) => value as double);
   }
 
   /// Returns the value of flag [flagKey] for the current user as a double, along with information about the resultant value.
@@ -141,7 +140,7 @@ class LDClient {
   /// See [LDEvaluationDetail] for more information on the returned value. Note that [LDConfigBuilder.setEvaluationReasons]
   /// must have been set to `true` to request the additional evaluation information from the backend.
   static Future<LDEvaluationDetail<double>> doubleVariationDetail(String flagKey, double defaultValue) async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('doubleVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    Map<String, dynamic> result = await _channel.invokeMapMethod('doubleVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue }) ?? {};
     return LDEvaluationDetail(result['value'], result['variationIndex'], LDEvaluationReason._fromCodecValue(result['reason']));
   }
 
@@ -149,7 +148,7 @@ class LDClient {
   ///
   /// Will return the provided [defaultValue] if the flag is missing, not a string, or if some error occurs.
   static Future<String> stringVariation(String flagKey, String defaultValue) async {
-    return _channel.invokeMethod('stringVariation', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    return _channel.invokeMethod('stringVariation', {'flagKey': flagKey, 'defaultValue': defaultValue }).then((value) => value as String);
   }
 
   /// Returns the value of flag [flagKey] for the current user as a string, along with information about the resultant value.
@@ -157,7 +156,7 @@ class LDClient {
   /// See [LDEvaluationDetail] for more information on the returned value. Note that [LDConfigBuilder.setEvaluationReasons]
   /// must have been set to `true` to request the additional evaluation information from the backend.
   static Future<LDEvaluationDetail<String>> stringVariationDetail(String flagKey, String defaultValue) async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('stringVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue });
+    Map<String, dynamic> result = await _channel.invokeMapMethod('stringVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue }) ?? {};
     return LDEvaluationDetail(result['value'], result['variationIndex'], LDEvaluationReason._fromCodecValue(result['reason']));
   }
 
@@ -174,7 +173,7 @@ class LDClient {
   /// See [LDEvaluationDetail] for more information on the returned value. Note that [LDConfigBuilder.setEvaluationReasons]
   /// must have been set to `true` to request the additional evaluation information from the backend.
   static Future<LDEvaluationDetail<LDValue>> jsonVariationDetail(String flagKey, LDValue defaultValue) async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('jsonVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue.codecValue()});
+    Map<String, dynamic> result = await _channel.invokeMapMethod('jsonVariationDetail', {'flagKey': flagKey, 'defaultValue': defaultValue.codecValue()}) ?? {};
     return LDEvaluationDetail(LDValue.fromCodecValue(result['value']), result['variationIndex'], LDEvaluationReason._fromCodecValue(result['reason']));
   }
 
@@ -183,7 +182,7 @@ class LDClient {
   /// The resultant map contains an entry for each known flag, the key being the flag's key and the value being its
   /// value as an [LDValue].
   static Future<Map<String, LDValue>> allFlags() async {
-    Map<String, dynamic> allFlagsDyn = await _channel.invokeMapMethod('allFlags');
+    Map<String, dynamic> allFlagsDyn = await _channel.invokeMapMethod('allFlags') ?? {};
     Map<String, LDValue> allFlagsRes = Map();
     allFlagsDyn.forEach((key, value) {
         allFlagsRes[key] = LDValue.fromCodecValue(value);
@@ -208,14 +207,14 @@ class LDClient {
 
   /// Returns whether the SDK is currently configured to make network connections.
   static Future<bool> isOnline() async {
-    return _channel.invokeMethod('isOnline');
+    return _channel.invokeMethod('isOnline').then((value) => value as bool);
   }
 
   /// Returns information about the current state of the SDK's connection to the LaunchDarkly.
   ///
   /// See [LDConnectionInformation] for the available information.
-  static Future<LDConnectionInformation> getConnectionInformation() async {
-    Map<String, dynamic> result = await _channel.invokeMapMethod('getConnectionInformation');
+  static Future<LDConnectionInformation?> getConnectionInformation() async {
+    Map<String, dynamic> result = await _channel.invokeMapMethod('getConnectionInformation') ?? {};
     return LDConnectionInformation._fromCodecValue(result);
   }
 

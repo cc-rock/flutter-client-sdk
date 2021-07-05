@@ -103,9 +103,9 @@ class _MyAppState extends State<MyApp> {
                 DropdownButton<String>(
                   value: typeDropdown,
                   isDense: true,
-                  onChanged: (String newValue) {
+                  onChanged: (String? newValue) {
                     setState(() {
-                      typeDropdown = newValue;
+                      typeDropdown = newValue!;
                     });
                   },
                   items: ['Boolean', 'Integer', 'Float', 'String', 'Json']

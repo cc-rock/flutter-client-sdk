@@ -1,4 +1,3 @@
-// @dart=2.7
 part of launchdarkly_flutter_client_sdk;
 
 /// Enumerated type defining the possible reasons for a flag evaluation result, used in [LDEvaluationReason].
@@ -65,21 +64,21 @@ class LDEvaluationReason {
   /// The index of the rule that match the user when [kind] is [LDKind.RULE_MATCH].
   ///
   /// For all other kinds, this field is undefined.
-  final int ruleIndex;
+  final int? ruleIndex;
   /// The id of the rule that match the user when [kind] is [LDKind.RULE_MATCH].
   ///
   /// For all other kinds, this field is undefined.
-  final String ruleId;
+  final String? ruleId;
   /// The key of the first prerequisite that failed when [kind] is [LDKind.PREREQUISITE_FAILED].
   ///
   /// For all other kinds, this field is undefined.
-  final String prerequisiteKey;
+  final String? prerequisiteKey;
   /// The type of the error responsible when the [kind] is [LDKind.ERROR].
   ///
   /// For all other kinds, this field is undefined.
-  final LDErrorKind errorKind;
+  final LDErrorKind? errorKind;
 
-  static LDEvaluationReason _fromCodecValue(dynamic value) {
+  static LDEvaluationReason? _fromCodecValue(dynamic value) {
     if (!(value is Map)) return null;
     Map<String, dynamic> map = Map.from(value as Map);
     switch (map['kind']) {
@@ -102,15 +101,15 @@ class LDEvaluationReason {
   /// Returns an [LDEvaluationReason] with the kind [LDKind.TARGET_MATCH].
   static LDEvaluationReason targetMatch() => _TARGET_MATCH_INSTANCE;
   /// Returns an [LDEvaluationReason] with the kind [LDKind.RULE_MATCH] and the given [ruleIndex] and [ruleId].
-  static LDEvaluationReason ruleMatch({int ruleIndex, String ruleId}) {
+  static LDEvaluationReason ruleMatch({required int ruleIndex, required String ruleId}) {
     return LDEvaluationReason._(LDKind.RULE_MATCH, ruleIndex: ruleIndex, ruleId: ruleId);
   }
   /// Returns an [LDEvaluationReason] with the kind [LDKind.PREREQUISITE_FAILED] and the given [prerequisiteKey].
-  static LDEvaluationReason prerequisiteFailed({String prerequisiteKey}) {
+  static LDEvaluationReason prerequisiteFailed({required String prerequisiteKey}) {
     return LDEvaluationReason._(LDKind.PREREQUISITE_FAILED, prerequisiteKey: prerequisiteKey);
   }
   /// Returns an [LDEvaluationReason] with the kind [LDKind.ERROR] and the given [errorKind].
-  static LDEvaluationReason error({LDErrorKind errorKind}) {
+  static LDEvaluationReason error({required LDErrorKind errorKind}) {
     return LDEvaluationReason._(LDKind.ERROR, errorKind: errorKind);
   }
   /// Returns an [LDEvaluationReason] with the kind [LDKind.UNKNOWN].
@@ -121,13 +120,13 @@ class LDEvaluationReason {
 /// the evaluation with an explanation of how it was calculated.
 class LDEvaluationDetail<T> {
   /// The result of the flag evaluation.
-  final T value;
+  final T? value;
   /// The index of the returned flag within the list of variations if the default value was not returned.
-  final int variationIndex;
+  final int? variationIndex;
   /// An object describing the primary reason for the resultant flag value.
   ///
   /// See [LDEvaluationReason] for details.
-  final LDEvaluationReason reason;
+  final LDEvaluationReason? reason;
 
   /// Constructor for [LDEvaluationDetail].
   const LDEvaluationDetail(this.value, this.variationIndex, this.reason);

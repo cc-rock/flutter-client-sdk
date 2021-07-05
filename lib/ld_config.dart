@@ -1,4 +1,3 @@
-// @dart=2.7
 part of launchdarkly_flutter_client_sdk;
 
 /// A configuration object used when initializing the [LDClient].
@@ -7,44 +6,44 @@ class LDConfig {
   final String mobileKey;
 
   /// The configured URI for polling requests.
-  final String baseUri;
+  final String? baseUri;
   /// The configured URI for eventing requests.
-  final String eventsUri;
+  final String? eventsUri;
   /// The configured URI for stream requests.
-  final String streamUri;
+  final String? streamUri;
 
   /// The configured event capacity.
-  final int eventsCapacity;
+  final int? eventsCapacity;
   /// The configured event flush interval in milliseconds.
-  final int eventsFlushIntervalMillis;
+  final int? eventsFlushIntervalMillis;
   /// The configured connection timeout in milliseconds.
-  final int connectionTimeoutMillis;
+  final int? connectionTimeoutMillis;
   /// The configured foreground polling interval in milliseconds.
-  final int pollingIntervalMillis;
+  final int? pollingIntervalMillis;
   /// The configured background polling interval in milliseconds.
-  final int backgroundPollingIntervalMillis;
+  final int? backgroundPollingIntervalMillis;
   /// The configured diagnostic recording interval in milliseconds.
-  final int diagnosticRecordingIntervalMillis;
+  final int? diagnosticRecordingIntervalMillis;
 
   /// Whether the SDK is configured to use a streaming connection when in the foreground.
-  final bool stream;
+  final bool? stream;
   /// Whether the SDK is configured not to connect to LaunchDarkly on [LDClient.start].
-  final bool offline;
+  final bool? offline;
   /// Whether the SDK is configured to disable polling for feature flag values when the application is in the background.
-  final bool disableBackgroundUpdating;
+  final bool? disableBackgroundUpdating;
   /// Whether the SDK is configured to use the HTTP `REPORT` verb for flag requests.
-  final bool useReport;
+  final bool? useReport;
   /// Whether the SDK is configured to send the entire [LDUser] object to the service in every event.
-  final bool inlineUsersInEvents;
+  final bool? inlineUsersInEvents;
   /// Whether the SDK is configured to request evaluation reasons to be included in flag data from the service.
-  final bool evaluationReasons;
+  final bool? evaluationReasons;
   /// Whether the SDK is configured to not send diagnostic data to LaunchDarkly.
-  final bool diagnosticOptOut;
+  final bool? diagnosticOptOut;
 
   /// Whether the SDK is configured to never include user attribute values in analytics requests.
-  final bool allAttributesPrivate;
+  final bool? allAttributesPrivate;
   /// The configured set of attributes to never include values for in analytics requests.
-  final Set<String> privateAttributeNames;
+  final Set<String>? privateAttributeNames;
 
   LDConfig._builder(LDConfigBuilder builder) :
         mobileKey = builder._mobileKey,
@@ -87,7 +86,7 @@ class LDConfig {
     result['evaluationReasons'] = evaluationReasons;
     result['diagnosticOptOut'] = diagnosticOptOut;
     result['allAttributesPrivate'] = allAttributesPrivate;
-    result['privateAttributeNames'] = privateAttributeNames == null ? null : privateAttributeNames.toList(growable: false);
+    result['privateAttributeNames'] = privateAttributeNames == null ? null : privateAttributeNames!.toList(growable: false);
     result['wrapperName'] = 'FlutterClientSdk';
     result['wrapperVersion'] = wrapperVersion;
     return result;
@@ -98,32 +97,30 @@ class LDConfig {
 class LDConfigBuilder {
   String _mobileKey;
 
-  String _baseUri;
-  String _eventsUri;
-  String _streamUri;
+  String? _baseUri;
+  String? _eventsUri;
+  String? _streamUri;
 
-  int _eventsCapacity;
-  int _eventsFlushIntervalMillis;
-  int _connectionTimeoutMillis;
-  int _pollingIntervalMillis;
-  int _backgroundPollingIntervalMillis;
-  int _diagnosticRecordingIntervalMillis;
+  int? _eventsCapacity;
+  int? _eventsFlushIntervalMillis;
+  int? _connectionTimeoutMillis;
+  int? _pollingIntervalMillis;
+  int? _backgroundPollingIntervalMillis;
+  int? _diagnosticRecordingIntervalMillis;
 
-  bool _stream = true;
-  bool _offline = false;
-  bool _disableBackgroundUpdating = true;
-  bool _useReport = false;
-  bool _inlineUsersInEvents = false;
-  bool _evaluationReasons = false;
-  bool _diagnosticOptOut = false;
+  bool? _stream = true;
+  bool? _offline = false;
+  bool? _disableBackgroundUpdating = true;
+  bool? _useReport = false;
+  bool? _inlineUsersInEvents = false;
+  bool? _evaluationReasons = false;
+  bool? _diagnosticOptOut = false;
 
-  bool _allAttributesPrivate;
-  Set<String> _privateAttributeNames;
+  bool? _allAttributesPrivate;
+  Set<String>? _privateAttributeNames;
 
   /// Create a new `LDConfigBuilder` for the given mobile key.
-  LDConfigBuilder(String mobileKey) {
-    this._mobileKey = mobileKey;
-  }
+  LDConfigBuilder(this._mobileKey);
 
   /// Sets the URI for polling requests.
   LDConfigBuilder setBaseUri(String baseUri) {

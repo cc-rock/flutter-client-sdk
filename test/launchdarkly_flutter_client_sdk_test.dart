@@ -294,7 +294,7 @@ class LDUserAttr {
   final String fieldName;
   final void Function(LDUserBuilder, String) setPublic;
   final void Function(LDUserBuilder, String) setPrivate;
-  final String Function(LDUser) getter;
+  final String? Function(LDUser) getter;
 
   LDUserAttr(this.fieldName, this.setPublic, this.setPrivate, this.getter);
 }
@@ -331,8 +331,8 @@ void testLDUser() {
       LDUserBuilder builder = LDUserBuilder('user key');
       attr.setPrivate(builder, 'val');
       LDUser user = builder.build();
-      expect(user.privateAttributeNames.length, equals(1));
-      expect(user.privateAttributeNames[0], equals(attr.fieldName));
+      expect(user.privateAttributeNames!.length, equals(1));
+      expect(user.privateAttributeNames![0], equals(attr.fieldName));
       expect(attr.getter(user), equals('val'));
     });
   });
@@ -343,11 +343,11 @@ void testLDUser() {
         .custom('custom2', LDValue.ofBool(false))
         .privateCustom('custom3', LDValue.ofString('abc'))
         .build();
-    expect(user.custom['custom1'], same(LDValue.ofNull()));
-    expect(user.custom['custom2'], same(LDValue.ofBool(false)));
-    expect(user.custom['custom3'], equals(LDValue.ofString('abc')));
-    expect(user.privateAttributeNames.length, equals(1));
-    expect(user.privateAttributeNames[0], equals('custom3'));
+    expect(user.custom!['custom1'], same(LDValue.ofNull()));
+    expect(user.custom!['custom2'], same(LDValue.ofBool(false)));
+    expect(user.custom!['custom3'], equals(LDValue.ofString('abc')));
+    expect(user.privateAttributeNames!.length, equals(1));
+    expect(user.privateAttributeNames![0], equals('custom3'));
   });
 }
 
@@ -367,8 +367,8 @@ void testLDConnectionInformation() {
     LDFailure failure = LDFailure('failure', LDFailureType.UNEXPECTED_STREAM_ELEMENT_TYPE);
     connInfo = LDConnectionInformation(LDConnectionState.POLLING, failure, DateTime.utc(2020), DateTime.utc(2021));
     expect(connInfo.connectionState, equals(LDConnectionState.POLLING));
-    expect(connInfo.lastFailure.message, 'failure');
-    expect(connInfo.lastFailure.failureType, LDFailureType.UNEXPECTED_STREAM_ELEMENT_TYPE);
+    expect(connInfo.lastFailure!.message, 'failure');
+    expect(connInfo.lastFailure!.failureType, LDFailureType.UNEXPECTED_STREAM_ELEMENT_TYPE);
     expect(connInfo.lastSuccessfulConnection, DateTime.utc(2020));
     expect(connInfo.lastFailedConnection, DateTime.utc(2021));
   });
@@ -488,7 +488,7 @@ List<LDValue> ldValueTestValues =
   , LDValue.fromCodecValue({'a': {}, 'b': [false, null], 'c': {'k': 'abc'}})];
 
 List<MethodCall> callQueue = [];
-dynamic callReturn = null;
+dynamic callReturn;
 MethodCall get takeCall => callQueue.removeAt(0);
 
 void expectCall(String name, dynamic arguments) => expect(takeCall, isMethodCall(name, arguments: arguments));
@@ -551,7 +551,7 @@ void testLDClient() {
   });
 
   test('boolVariation', () async {
-    await Future.forEach([false, true], (val) async {
+    await Future.forEach([false, true], (bool val) async {
       callReturn = val;
       expect(await LDClient.boolVariation('flagKey', !val), equals(val));
       expectCall('boolVariation', {'flagKey': 'flagKey', 'defaultValue': !val});
@@ -615,8 +615,8 @@ void testLDClient() {
     expectCall('doubleVariationDetail', {'flagKey': 'flagKey', 'defaultValue': 2.5});
     expect(result.value, equals(1.25));
     expect(result.variationIndex, equals(1));
-    expect(result.reason.kind, LDKind.PREREQUISITE_FAILED);
-    expect(result.reason.prerequisiteKey, 'pid');
+    expect(result.reason!.kind, LDKind.PREREQUISITE_FAILED);
+    expect(result.reason!.prerequisiteKey, 'pid');
   });
 
   test('stringVariation', () async {
@@ -631,21 +631,21 @@ void testLDClient() {
     expectCall('stringVariationDetail', {'flagKey': 'flagKey', 'defaultValue': 'def'});
     expect(result.value, equals('abc'));
     expect(result.variationIndex, equals(1));
-    expect(result.reason.kind, equals(LDKind.RULE_MATCH));
-    expect(result.reason.ruleIndex, equals(1));
-    expect(result.reason.ruleId, equals('rid'));
+    expect(result.reason!.kind, equals(LDKind.RULE_MATCH));
+    expect(result.reason!.ruleIndex, equals(1));
+    expect(result.reason!.ruleId, equals('rid'));
 
     callReturn = {'value': 'abc', 'variationIndex': 1, 'reason': { 'kind': 'ERROR', 'errorKind': 'INVALID_KIND' }};
     result = await LDClient.stringVariationDetail('flagKey', 'def');
     expectCall('stringVariationDetail', {'flagKey': 'flagKey', 'defaultValue': 'def'});
     expect(result.value, equals('abc'));
     expect(result.variationIndex, equals(1));
-    expect(result.reason.kind, equals(LDKind.ERROR));
-    expect(result.reason.errorKind, equals(LDErrorKind.UNKNOWN));
+    expect(result.reason!.kind, equals(LDKind.ERROR));
+    expect(result.reason!.errorKind, equals(LDErrorKind.UNKNOWN));
   });
 
   test('jsonVariation', () async {
-    await Future.forEach(ldValueTestValues, (val) async {
+    await Future.forEach(ldValueTestValues, (LDValue val) async {
       callReturn = val.codecValue();
       expect(await LDClient.jsonVariation('flagKey', LDValue.ofBool(true)), equals(val));
       expectCall('jsonVariation', {'flagKey': 'flagKey', 'defaultValue': true });
@@ -665,8 +665,8 @@ void testLDClient() {
       expectCall('jsonVariationDetail', {'flagKey': 'flagKey', 'defaultValue': 17});
       expect(result.value, equals(ldValueTestValues[i]));
       expect(result.variationIndex, equals(1));
-      expect(result.reason.kind, equals(LDKind.ERROR));
-      expect(result.reason.errorKind, equals(errorKinds[i]));
+      expect(result.reason!.kind, equals(LDKind.ERROR));
+      expect(result.reason!.errorKind, equals(errorKinds[i]));
     }
   });
 
@@ -691,7 +691,7 @@ void testLDClient() {
   });
 
   test('setOnline', () async {
-    Future.forEach([false, true], (val) async {
+    Future.forEach([false, true], (bool val) async {
       await LDClient.setOnline(val);
       expectCall('setOnline', {'online': val});
     });
@@ -710,13 +710,13 @@ void testLDClient() {
                  , 'lastFailure': { 'message': 'failure', 'failureType': 'NETWORK_FAILURE' }
                  , 'lastSuccessfulConnection': DateTime.utc(2020).millisecondsSinceEpoch
                  , 'lastFailedConnection': DateTime.utc(2021).millisecondsSinceEpoch };
-    LDConnectionInformation connInfo = await LDClient.getConnectionInformation();
+    LDConnectionInformation? connInfo = await LDClient.getConnectionInformation();
     expectCall('getConnectionInformation', null);
-    expect(connInfo.connectionState, equals(LDConnectionState.STREAMING));
+    expect(connInfo!.connectionState, equals(LDConnectionState.STREAMING));
     expect(connInfo.lastSuccessfulConnection, equals(DateTime.utc(2020)));
     expect(connInfo.lastFailedConnection, equals(DateTime.utc(2021)));
-    expect(connInfo.lastFailure.message, equals('failure'));
-    expect(connInfo.lastFailure.failureType, equals(LDFailureType.NETWORK_FAILURE));
+    expect(connInfo.lastFailure!.message, equals('failure'));
+    expect(connInfo.lastFailure!.failureType, equals(LDFailureType.NETWORK_FAILURE));
   });
 
   test('close', () async {
@@ -739,8 +739,8 @@ void testLDClient() {
 
     MethodCall call = MethodCall('handleFlagUpdate', 'new_ui');
     ByteData message = StandardMethodCodec().encodeMethodCall(call);
-    BinaryMessenger messenger = ServicesBinding.instance.defaultBinaryMessenger;
-    messenger.handlePlatformMessage('launchdarkly_flutter_client_sdk', message, null);
+    BinaryMessenger? messenger = ServicesBinding.instance?.defaultBinaryMessenger;
+    messenger?.handlePlatformMessage('launchdarkly_flutter_client_sdk', message, null);
 
     await LDClient.unregisterFeatureFlagListener('new_ui', wrappedCallback);
     expectCall('stopFlagListening', 'new_ui');
@@ -762,8 +762,8 @@ void testLDClient() {
 
     MethodCall call = MethodCall('handleFlagsReceived', ['abc', 'def']);
     ByteData message = StandardMethodCodec().encodeMethodCall(call);
-    BinaryMessenger messenger = ServicesBinding.instance.defaultBinaryMessenger;
-    messenger.handlePlatformMessage('launchdarkly_flutter_client_sdk', message, null);
+    BinaryMessenger? messenger = ServicesBinding.instance?.defaultBinaryMessenger;
+    messenger?.handlePlatformMessage('launchdarkly_flutter_client_sdk', message, null);
 
     await LDClient.unregisterFlagsReceivedListener(wrappedCallback);
     expect(callQueue.isEmpty, isTrue);
