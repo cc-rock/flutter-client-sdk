@@ -6,8 +6,8 @@ import android.os.Handler
 import android.os.Looper
 
 import androidx.annotation.NonNull
-import com.google.gson.*
-import com.launchdarkly.android.*
+import com.launchdarkly.sdk.*
+import com.launchdarkly.sdk.android.*
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -16,7 +16,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
-public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandler {
+class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandler {
   private lateinit var channel : MethodChannel
   private lateinit var application: Application
   private lateinit var flagChangeListener: FeatureFlagChangeListener
@@ -60,71 +60,71 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
     fun configFromMap(map: Map<String, Any>): LDConfig {
       val configBuilder = LDConfig.Builder()
       if (map["mobileKey"] is String) {
-        configBuilder.setMobileKey(map["mobileKey"] as String)
+        configBuilder.mobileKey(map["mobileKey"] as String)
       }
       if (map["baseUri"] is String) {
-        configBuilder.setBaseUri(Uri.parse(map["baseUri"] as String))
+        configBuilder.pollUri(Uri.parse(map["baseUri"] as String))
       }
       if (map["eventsUri"] is String) {
-        configBuilder.setEventsUri(Uri.parse((map["eventsUri"] as String) + "/mobile"))
+        configBuilder.eventsUri(Uri.parse((map["eventsUri"] as String)))
       }
       if (map["streamUri"] is String) {
-        configBuilder.setStreamUri(Uri.parse(map["streamUri"] as String))
+        configBuilder.streamUri(Uri.parse(map["streamUri"] as String))
       }
       if (map["eventsCapacity"] is Int) {
-        configBuilder.setEventsCapacity(map["eventsCapacity"] as Int)
+        configBuilder.eventsCapacity(map["eventsCapacity"] as Int)
       }
       if (map["eventsFlushIntervalMillis"] is Int) {
-        configBuilder.setEventsFlushIntervalMillis(map["eventsFlushIntervalMillis"] as Int)
+        configBuilder.eventsFlushIntervalMillis(map["eventsFlushIntervalMillis"] as Int)
       }
       if (map["connectionTimeoutMillis"] is Int) {
-        configBuilder.setConnectionTimeoutMillis(map["connectionTimeoutMillis"] as Int)
+        configBuilder.connectionTimeoutMillis(map["connectionTimeoutMillis"] as Int)
       }
       if (map["pollingIntervalMillis"] is Int) {
-        configBuilder.setPollingIntervalMillis(map["pollingIntervalMillis"] as Int)
+        configBuilder.pollingIntervalMillis(map["pollingIntervalMillis"] as Int)
       }
       if (map["backgroundPollingIntervalMillis"] is Int) {
-        configBuilder.setBackgroundPollingIntervalMillis(map["backgroundPollingIntervalMillis"] as Int)
+        configBuilder.backgroundPollingIntervalMillis(map["backgroundPollingIntervalMillis"] as Int)
       }
       if (map["diagnosticRecordingIntervalMillis"] is Int) {
-        configBuilder.setDiagnosticRecordingIntervalMillis(map["diagnosticRecordingIntervalMillis"] as Int)
+        configBuilder.diagnosticRecordingIntervalMillis(map["diagnosticRecordingIntervalMillis"] as Int)
       }
       if (map["stream"] is Boolean) {
-        configBuilder.setStream(map["stream"] as Boolean)
+        configBuilder.stream(map["stream"] as Boolean)
       }
       if (map["offline"] is Boolean) {
-        configBuilder.setOffline(map["offline"] as Boolean)
+        configBuilder.offline(map["offline"] as Boolean)
       }
       if (map["disableBackgroundUpdating"] is Boolean) {
-        configBuilder.setDisableBackgroundUpdating(map["disableBackgroundUpdating"] as Boolean)
+        configBuilder.disableBackgroundUpdating(map["disableBackgroundUpdating"] as Boolean)
       }
       if (map["useReport"] is Boolean) {
-        configBuilder.setUseReport(map["useReport"] as Boolean)
+        configBuilder.useReport(map["useReport"] as Boolean)
       }
       if (map["inlineUsersInEvents"] is Boolean) {
-        configBuilder.setInlineUsersInEvents(map["inlineUsersInEvents"] as Boolean)
+        configBuilder.inlineUsersInEvents(map["inlineUsersInEvents"] as Boolean)
       }
       if (map["evaluationReasons"] is Boolean) {
-        configBuilder.setEvaluationReasons(map["evaluationReasons"] as Boolean)
+        configBuilder.evaluationReasons(map["evaluationReasons"] as Boolean)
       }
       if (map["diagnosticOptOut"] is Boolean) {
-        configBuilder.setDiagnosticOptOut(map["diagnosticOptOut"] as Boolean)
+        configBuilder.diagnosticOptOut(map["diagnosticOptOut"] as Boolean)
       }
       if (map["allAttributesPrivate"] is Boolean && map["allAttributesPrivate"] as Boolean) {
         configBuilder.allAttributesPrivate()
       }
       if (map["privateAttributeNames"] != null) {
-        val privateAttributeNames = mutableSetOf<String>()
+        val privateAttributeNames = mutableListOf<UserAttribute>()
         for (name in map["privateAttributeNames"] as List<*>) {
-          privateAttributeNames.add(name as String)
+          privateAttributeNames.add(UserAttribute.forName(name as String))
         }
-        configBuilder.setPrivateAttributeNames(privateAttributeNames)
+        configBuilder.privateAttributes(*privateAttributeNames.toTypedArray())
       }
       if (map["wrapperName"] is String) {
-        configBuilder.setWrapperName(map["wrapperName"] as String)
+        configBuilder.wrapperName(map["wrapperName"] as String)
       }
       if (map["wrapperVersion"] is String) {
-        configBuilder.setWrapperVersion(map["wrapperVersion"] as String)
+        configBuilder.wrapperVersion(map["wrapperVersion"] as String)
       }
       return configBuilder.build()
     }
@@ -160,7 +160,14 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
               userBuilder.custom(entry.key, value)
             }
           }
-          else if (value is Number) {
+          else if (value is Int) {
+            if (privateAttrs.contains(entry.key)) {
+              userBuilder.privateCustom(entry.key, value)
+            } else {
+              userBuilder.custom(entry.key, value)
+            }
+          }
+          else if (value is Double) {
             if (privateAttrs.contains(entry.key)) {
               userBuilder.privateCustom(entry.key, value)
             } else {
@@ -175,26 +182,21 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
             }
           }
           else if (value is List<*>) {
-            if (value.isEmpty()) {
-              if (privateAttrs.contains(entry.key)) {
-                userBuilder.privateCustomNumber(entry.key, ArrayList())
-              } else {
-                userBuilder.customNumber(entry.key, ArrayList())
+            val arrayBuilder = LDValue.buildArray();
+            for (item in value) {
+              when (item) {
+                is Boolean -> arrayBuilder.add(item)
+                is Int -> arrayBuilder.add(item)
+                is Long -> arrayBuilder.add(item)
+                is Float -> arrayBuilder.add(item)
+                is Double -> arrayBuilder.add(item)
+                is String -> arrayBuilder.add(item)
               }
             }
-            else if (value[0] is Number) {
-              if (privateAttrs.contains(entry.key)) {
-                userBuilder.privateCustomNumber(entry.key, value as List<Number>)
-              } else {
-                userBuilder.customNumber(entry.key, value as List<Number>)
-              }
-            }
-            else if (value[0] is String) {
-              if (privateAttrs.contains(entry.key)) {
-                userBuilder.privateCustomString(entry.key, value as List<String>)
-              } else {
-                userBuilder.customString(entry.key, value as List<String>)
-              }
+            if (privateAttrs.contains(entry.key)) {
+              userBuilder.privateCustom(entry.key, arrayBuilder.build())
+            } else {
+              userBuilder.custom(entry.key, arrayBuilder.build())
             }
           }
         }
@@ -202,65 +204,75 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
       return userBuilder.build()
     }
 
-    fun jsonElementFromBridge(dyn: Any?): JsonElement {
+    fun ldValueFromBridge(dyn: Any?): LDValue {
       when (dyn) {
         null -> {
-          return JsonNull.INSTANCE
+          return LDValue.ofNull()
         }
         is Boolean -> {
-          return JsonPrimitive(dyn)
+          return LDValue.of(dyn)
         }
-        is Number -> {
-          return JsonPrimitive(dyn)
+        is Int -> {
+          return LDValue.of(dyn)
+        }
+        is Long -> {
+          return LDValue.of(dyn)
+        }
+        is Double -> {
+          return LDValue.of(dyn)
         }
         is String -> {
-          return JsonPrimitive(dyn)
+          return LDValue.of(dyn)
         }
         is ArrayList<*> -> {
-          val jsonArr = JsonArray()
+          val ldArrBuilder = LDValue.buildArray();
           dyn.forEach {
-            jsonArr.add(jsonElementFromBridge(it))
+            ldArrBuilder.add(ldValueFromBridge(it))
           }
-          return jsonArr
+          return ldArrBuilder.build()
         }
         else -> {
-          val jsonObj = JsonObject()
+          val ldObjBuilder = LDValue.buildObject();
           (dyn as HashMap<*, *>).forEach {
-            jsonObj.add(it.key as String, jsonElementFromBridge(it.value))
+            ldObjBuilder.put(it.key as String, ldValueFromBridge(it.value))
           }
-          return jsonObj
+          return ldObjBuilder.build()
         }
       }
     }
 
-    fun jsonElementToBridge(jsonElement: JsonElement?): Any? {
+    fun ldValueToBridge(ldValue: LDValue?): Any? {
       when {
-        jsonElement == null || jsonElement.isJsonNull -> {
+        ldValue == null || ldValue.isNull -> {
           return null
         }
-        jsonElement is JsonPrimitive && jsonElement.isBoolean -> {
-          return jsonElement.asBoolean
+        ldValue.type == LDValueType.BOOLEAN -> {
+          return ldValue.booleanValue()
         }
-        jsonElement is JsonPrimitive && jsonElement.isNumber -> {
-          return jsonElement.asDouble
+        ldValue.isInt -> {
+          return ldValue.longValue()
         }
-        jsonElement is JsonPrimitive -> {
-          return jsonElement.asString
+        ldValue.isNumber -> {
+          return ldValue.doubleValue()
         }
-        jsonElement is JsonArray -> {
+        ldValue.isString -> {
+          return ldValue.stringValue()
+        }
+        ldValue.type == LDValueType.ARRAY -> {
           val res = ArrayList<Any?>()
-          jsonElement.forEach {
-            res.add(jsonElementToBridge(it))
+          ldValue.values().forEach {
+            res.add(ldValueToBridge(it))
           }
           return res
         }
-        else -> {
+        ldValue.type == LDValueType.OBJECT -> {
           val res = HashMap<String, Any?>()
-          jsonElement.asJsonObject.entrySet().forEach {
-            res[it.key] = jsonElementToBridge(it.value)
+          ldValue.keys().forEach {
+            res[it] = ldValueToBridge(ldValue.get(it))
           }
           return res
         }
+        else -> return null
       }
     }
 
@@ -270,15 +282,15 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
       res["variationIndex"] = variationIndex
       val reasonRes = HashMap<String, Any?>()
       reasonRes["kind"] = reason?.kind?.name
-      when (reason) {
-        is EvaluationReason.RuleMatch -> {
+      when (reason?.kind) {
+        EvaluationReason.Kind.RULE_MATCH -> {
           reasonRes["ruleIndex"] = reason.ruleIndex
           reasonRes["ruleId"] = reason.ruleId
         }
-        is EvaluationReason.PrerequisiteFailed -> {
+        EvaluationReason.Kind.PREREQUISITE_FAILED -> {
           reasonRes["prerequisiteKey"] = reason.prerequisiteKey
         }
-        is EvaluationReason.Error -> {
+        EvaluationReason.Kind.ERROR -> {
           reasonRes["errorKind"] = reason.errorKind.name
         }
       }
@@ -286,7 +298,7 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
       return res
     }
 
-    fun ldFailureToBridge(failure: LDFailure?): Any? {
+    private fun ldFailureToBridge(failure: LDFailure?): Any? {
       if (failure == null) return null
       val res = HashMap<String, Any?>()
       res["message"] = failure.message
@@ -320,53 +332,82 @@ public class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandle
         result.success(null)
       }
       "track" -> {
-        val data = jsonElementFromBridge(call.argument("data"))
-        LDClient.get().track(call.argument("eventName"), data, call.argument("metricValue"))
+        val data = ldValueFromBridge(call.argument("data"))
+        val metricValue: Double? = call.argument("metricValue")
+        if (metricValue != null) {
+          LDClient.get().trackMetric(call.argument("eventName"), data, metricValue)
+        } else {
+          LDClient.get().trackData(call.argument("eventName"), data)
+        }
         result.success(null)
       }
       "boolVariation" -> {
-        val evalResult = LDClient.get().boolVariation(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().boolVariation(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(evalResult)
       }
       "boolVariationDetail" -> {
-        val evalResult = LDClient.get().boolVariationDetail(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().boolVariationDetail(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(detailToBridge(evalResult.value, evalResult.variationIndex, evalResult.reason))
       }
       "intVariation" -> {
-        val evalResult = LDClient.get().intVariation(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().intVariation(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(evalResult)
       }
       "intVariationDetail" -> {
-        val evalResult = LDClient.get().intVariationDetail(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().intVariationDetail(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(detailToBridge(evalResult.value, evalResult.variationIndex, evalResult.reason))
       }
       "doubleVariation" -> {
-        val defaultValue: Double? = call.argument("defaultValue")
-        val evalResult = LDClient.get().floatVariation(call.argument("flagKey"), defaultValue?.toFloat())
+        val evalResult = LDClient.get().doubleVariation(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(evalResult)
       }
       "doubleVariationDetail" -> {
-        val defaultValue: Double? = call.argument("defaultValue")
-        val evalResult = LDClient.get().floatVariationDetail(call.argument("flagKey"), defaultValue?.toFloat())
+        val evalResult = LDClient.get().doubleVariationDetail(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(detailToBridge(evalResult.value, evalResult.variationIndex, evalResult.reason))
       }
       "stringVariation" -> {
-        val evalResult = LDClient.get().stringVariation(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().stringVariation(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(evalResult)
       }
       "stringVariationDetail" -> {
-        val evalResult = LDClient.get().stringVariationDetail(call.argument("flagKey"), call.argument("defaultValue"))
+        val evalResult = LDClient.get().stringVariationDetail(
+          call.argument("flagKey")!!,
+          call.argument("defaultValue")!!
+        )
         result.success(detailToBridge(evalResult.value, evalResult.variationIndex, evalResult.reason))
       }
       "jsonVariation" -> {
-        val defaultValue = jsonElementFromBridge(call.argument("defaultValue"))
-        val evalResult = LDClient.get().jsonVariation(call.argument("flagKey"), defaultValue)
-        result.success(jsonElementToBridge(evalResult))
+        val defaultValue = ldValueFromBridge(call.argument("defaultValue"))
+        val evalResult = LDClient.get().jsonValueVariation(
+          call.argument("flagKey")!!, defaultValue
+        )
+        result.success(ldValueToBridge(evalResult))
       }
       "jsonVariationDetail" -> {
-        val defaultValue = jsonElementFromBridge(call.argument("defaultValue"))
-        val evalResult = LDClient.get().jsonVariationDetail(call.argument("flagKey"), defaultValue)
-        result.success(detailToBridge(jsonElementToBridge(evalResult.value), evalResult.variationIndex, evalResult.reason))
+        val defaultValue = ldValueFromBridge(call.argument("defaultValue"))
+        val evalResult = LDClient.get().jsonValueVariationDetail(call.argument("flagKey")!!, defaultValue)
+        result.success(detailToBridge(ldValueToBridge(evalResult.value), evalResult.variationIndex, evalResult.reason))
       }
       "allFlags" -> {
         result.success(LDClient.get().allFlags())
