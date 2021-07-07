@@ -410,7 +410,9 @@ class LaunchdarklyFlutterClientSdkPlugin: FlutterPlugin, MethodCallHandler {
         result.success(detailToBridge(ldValueToBridge(evalResult.value), evalResult.variationIndex, evalResult.reason))
       }
       "allFlags" -> {
-        result.success(LDClient.get().allFlags())
+        result.success(LDClient.get().allFlags().entries.map {
+          Pair(it.key, ldValueToBridge(it.value))
+        }.toMap())
       }
       "flush" -> {
         LDClient.get().flush()
